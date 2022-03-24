@@ -17,7 +17,7 @@
 
 using namespace std;
 
-void initialize(double **u, double **u_new, double **v, double **v_new, double **F, double **G, double **P, double **P_old, double **P_new, int nx, int ny){
+void initialize(double **u, double **u_new, double **v, double **v_new, double **F, double **G, double **P, double **P_old, double **P_new, double **Phi, double **Phi_new, int nx, int ny){
 
   for(int i=0; i<=nx; i++){
     for(int j=0; j<=ny; j++){
@@ -42,12 +42,21 @@ void initialize(double **u, double **u_new, double **v, double **v_new, double *
       u_new[i][j] = 0;  
     }
   }
+  for(int i=0; i<=nx-1; i++){
+    for(int j=0; j<=ny-1; j++){
+      Phi[i][j] = 0;
+      Phi_new[i][j] = 0;
+      
+      }
+  }
   
   for(int j=1; j<=ny-1; j++){
-    u[0][j] = 1;
-    //u[i][1] = 0.5;
-    
+    u[0][j] = 1;  
   }
+  for(int j=1; j<=(ny/2-2); j++){
+    Phi[0][j] = 1;  
+  }
+  
 }
 
 void visualize(double **var, int nx, int ny){
@@ -166,7 +175,7 @@ void simulation_p(double **u, double **u_new, double **v, double **v_new, double
   }
   for(int i=1; i<nx; i++){
     P_new[i][0] = P_new[i][1];
-    P_new[i][nx]=P_new[i][nx-1];
+    P_new[i][nx-1]=P_new[i][nx-2];
   }
   
 }
@@ -208,9 +217,17 @@ void simulation_uv(double **u, double **u_new, double **v, double **v_new, doubl
     v_new[nx][j]=v_new[nx-1][j];
   }
 
- 
+}
 
-
+void simulation_passiveScalar(double **u, double **u_new, double **v, double **v_new, double **F, double **G, double **P, double **P_new, double **Phi, double **Phi_new, int nx, int ny, double Re, double dx, double dy, double dt){
+  for(int i = 1; i <= nx-2; i++){
+    for(int j = 1; j <= ny-2; j++){    
+      Phi_new[i][j] = (((Phi[i+1][j]-2*Phi[i][j]+Phi[i-1][j])/pow(dx,2)*Re)-((u[i][j]/(2*dx))*(Phi[i+1][j]-Phi[i-1][j])))*dt+Phi[i][j];
+     }
+  }
+    for(int j = 1; j <= ny/2-2; j++){    
+      Phi_new[0][j] = 1;
+    }
   
 }
 
@@ -261,8 +278,8 @@ void paraview(string fileName, double **var, int nx, int ny, double dx, double d
 
 int main(){
 
-  int nx = 60;
-  int ny = 20;
+  int nx = 111;
+  int ny = 30;
   double Re = 300.;
   double dx = 2;
   double dy = 1;
@@ -316,29 +333,46 @@ int main(){
   for(int i=0; i<nx+1; i++){
     P_new[i] = (double *) malloc((ny+1) * sizeof(double));
   }
+  double **Phi;
+  Phi = (double **) malloc ((nx) * sizeof(double));
+  for(int i=0; i<nx; i++){
+    Phi[i] = (double *) malloc((ny) * sizeof(double));
+  }
+  double **Phi_new;
+  Phi_new = (double **) malloc ((nx) * sizeof(double));
+  for(int i=0; i<nx; i++){
+    Phi_new[i] = (double *) malloc((ny) * sizeof(double));
+  }
+  
 
   //visualize(u,nx,ny);
   //visualize(v,nx,ny);
   
-  initialize(u,u_new,v,v_new,F,G,P,P_old,P_new,nx,ny);
-for (int n = 1; n<=30; n++){  
+  initialize(u,u_new,v,v_new,F,G,P,P_old,P_new,Phi,Phi_new,nx,ny);
+for (int n = 1; n<=100; n++){  
   simulation_FG(u, u_new, v, v_new, F, G, nx, ny, Re, dx, dy, dt);
   simulation_p(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
   simulation_uv(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
   update(u,u_new,nx,ny+1);
   update(v,v_new,nx+1,ny);
   update(P,P_new,nx+1,ny+1);
+  simulation_passiveScalar(u, u_new, v, v_new, F, G, P, P_new, Phi, Phi_new, nx, ny, Re, dx, dy, dt);
+  update(Phi,Phi_new,nx,ny);
   
   cout << "n = " << n << "\n";
  
   //if( n% == 0) {
   fileName = "phi_" + to_string(n) + ".vtk";
+  paraview(fileName, Phi, nx, ny, dx, dy);
+  fileName = "u_" + to_string(n) + ".vtk";
   paraview(fileName, u, nx, ny+1, dx, dy);
-  //visualize(F,nx,ny+1);
+
+  visualize(F,nx,ny+1);
   visualize(u,nx,ny+1);
-   //visualize(G,nx+1,ny);
-   //visualize(v,nx+1,ny);
-   //visualize(P,nx+1,ny+1);
+  visualize(G,nx+1,ny);
+  visualize(v,nx+1,ny);
+  visualize(P_new,nx+1,ny+1);
+  visualize(Phi_new,nx,ny);
   }
 //}
   
