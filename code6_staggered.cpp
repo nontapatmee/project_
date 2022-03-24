@@ -79,17 +79,23 @@ void simulation_FG(double **u, double **u_new, double **v, double **v_new, doubl
   
   for(int i=1; i<=nx-2; i++){
     for(int j =1; j<=ny-1; j++){
-      RHS_F1 = (((u[i+1][j]+2*u[i][j]+u[i-1][j])/pow(dx,2.))+((u[i][j+1]+2*u[i][j]+u[i][j-1])/pow(dy,2.)))/Re;
+        RHS_F1 = (((u[i+1][j]+2*u[i][j]+u[i-1][j])/pow(dx,2.))+((u[i][j+1]+2*u[i][j]+u[i][j-1])/pow(dy,2.)))/Re;
+	//S_F1 = (((u[i][j+1]+2*u[i][j]+u[i][j-1])/pow(dy,2.)))/Re;
+      
       RHS_F2 = (pow(((u[i][j]+u[i+1][j])/2),2.)-pow(((u[i-1][j]+u[i][j])/2),2.))/dx;
       RHS_F3 = (((v[i][j]+v[i+1][j])/2)*((u[i][j]+u[i][j+1])/2)-((v[i][j-1]+v[i+1][j-1])/2)*((u[i][j-1]+u[i][j])/2))/dy;
-      RHS_F = RHS_F1  -RHS_F2- RHS_F3;
+      RHS_F = RHS_F1  - RHS_F3 -RHS_F2;
       F[i][j] = u[i][j] + dt*RHS_F;
     }
   }
   for(int j =1; j<=ny-1; j++){
    F[0][j]=1;
   }
- 
+
+  for(int j = 1; j<=ny-1; j++){
+    G[nx-1][j]=G[nx-2][j];
+  }
+
 
   //for(int i=1; i<=nx-2; i++){
   //F[i][nx-1]=F[i][nx-2];
@@ -98,11 +104,17 @@ void simulation_FG(double **u, double **u_new, double **v, double **v_new, doubl
   for(int i=1; i<=nx-1; i++){
     for(int j =1; j<=ny-2; j++){
       RHS_G1 = (((v[i+1][j]+2*v[i][j]+v[i-1][j])/pow(dx,2.))+((v[i][j+1]+2*v[i][j]+v[i][j-1])/pow(dy,2.)))/Re;
+      //RHS_G1 = (((v[i+1][j]+2*v[i][j]+v[i-1][j])/pow(dx,2.)))/Re;
+
       RHS_G3 = (pow(((v[i][j]+v[i][j+1])/2),2.)-pow(((v[i][j-1]+v[i][j])/2),2.))/dy;
       RHS_G2 = (((u[i][j]+u[i][j+1])/2)*((v[i][j]+v[i+1][j])/2)-((u[i-1][j]+u[i-1][j+1])/2)*((v[i-1][j]+v[i][j])/2))/dx;
-      RHS_G = RHS_G1 - RHS_G2 -RHS_G3 ;
+      RHS_G = RHS_G1 - RHS_G2 -   RHS_G3;
       G[i][j] = v[i][j] + dt*RHS_G;
     }
+  }
+
+  for(int j = 1; j<=ny-2; j++){
+    G[nx][j]=G[nx-1][j];
   }
 
   
@@ -146,8 +158,17 @@ void simulation_p(double **u, double **u_new, double **v, double **v_new, double
 	}
       }
     }
- 
-  }  
+
+  }
+  
+  for(int j=1; j<ny; j++){
+    P_new[0][j] = P_new[1][j];
+  }
+  for(int i=1; i<nx; i++){
+    P_new[i][0] = P_new[i][1];
+    P_new[i][nx]=P_new[i][nx-1];
+  }
+  
 }
 
 
@@ -156,13 +177,15 @@ void simulation_uv(double **u, double **u_new, double **v, double **v_new, doubl
 
   for(int i=1; i<=nx-2; i++){
       for(int j =1; j<=ny-1; j++){
-	u_new[i][j]=F[i][j]+(dt*(P_new[i+1][j]-P_new[i][j]))/dx;
+	u_new[i][j]=F[i][j]-(dt*(P_new[i+1][j]-P_new[i][j]))/dx;
       }
+      cout<< P_new[i+1][1]-P_new[i][1]<<"\t"<<F[i][1]<<"\n";
   }
+ 
 	
   for(int i=1; i<=nx-1; i++){
       for(int j =1; j<=ny-2; j++){
-	v_new[i][j]=G[i][j]+(dt*(P_new[i][j+1]-P_new[i][j]))/dy;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! clip determine position
+	v_new[i][j]=G[i][j]-(dt*(P_new[i][j+1]-P_new[i][j]))/dy;//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! clip determine position
 
 	  //}
 	// else if(j>ny/2){
@@ -178,12 +201,22 @@ void simulation_uv(double **u, double **u_new, double **v, double **v_new, doubl
  for(int j =1; j<=ny-1; j++){
    u_new[0][j]=1;
   }
+ for(int j = 1; j<=ny-1; j++){
+    u_new[nx-1][j]=u_new[nx-2][j];
+  }
+ for(int j = 1; j<=ny-2; j++){
+    v_new[nx][j]=v_new[nx-1][j];
+  }
+
+ 
+
+
   
 }
 
 void update(double **var, double **var_new, int nx, int ny){
-  for(int i = 1; i <= nx-2; i++){
-    for(int j = 1; j <= ny-2; j++){    
+  for(int i = 0; i <= nx-1; i++){
+    for(int j = 0; j <= ny-1; j++){    
       var[i][j] = var_new[i][j];
     }
   }
@@ -228,12 +261,12 @@ void paraview(string fileName, double **var, int nx, int ny, double dx, double d
 
 int main(){
 
-  int nx = 150;
-  int ny = 50;
-  double Re = 200.;
-  double dx = 3;
+  int nx = 200;
+    int ny = 50;
+  double Re = 300.;
+  double dx = 2;
   double dy = 1;
-  double dt = 0.001;
+  double dt = 0.005;
   string fileName;
   
   double **u;
@@ -284,7 +317,7 @@ int main(){
     P_new[i] = (double *) malloc((ny+1) * sizeof(double));
   }
 
-  // visualize(u,nx,ny);
+  //visualize(u,nx,ny);
   //visualize(v,nx,ny);
   
   initialize(u,u_new,v,v_new,F,G,P,P_old,P_new,nx,ny);
@@ -301,11 +334,11 @@ for (int n = 1; n<=100; n++){
   //if( n%5 == 0) {
   fileName = "phi_" + to_string(n) + ".vtk";
   paraview(fileName, u, nx, ny+1, dx, dy);
-  //visualize(F,nx,ny+1);
-  visualize(u,nx,ny+1);
-  //visualize(G,nx+1,ny);
-  //visualize(v,nx+1,ny);
-  //visualize(P,nx+1,ny+1);
+   // visualize(F,nx,ny+1);
+   //sualize(u,nx,ny+1);
+   // visualize(G,nx+1,ny);
+   // visualize(v,nx+1,ny);
+   // visualize(P,nx+1,ny+1);
   }
 //}
   
