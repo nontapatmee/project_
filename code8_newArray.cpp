@@ -218,12 +218,16 @@ void simulation_uv(double **u, double **u_new, double **v, double **v_new, doubl
 void simulation_passiveScalar(double **u, double **u_new, double **v, double **v_new, double **F, double **G, double **P, double **P_new, double **Phi, double **Phi_new, int nx, int ny, double Re, double dx, double dy, double dt){
   for(int i = 1; i <= nx-3; i++){
     for(int j = 1; j <= ny-3; j++){    
-      Phi_new[i][j] = (((Phi[i+1][j]-2*Phi[i][j]+Phi[i-1][j])/pow(dx,2)*Re)-((u[i][j]/(2*dx))*(Phi[i+1][j]-Phi[i-1][j])))*dt+Phi[i][j];
+      Phi_new[i][j] = ((((Phi[i+1][j]-2*Phi[i][j]+Phi[i-1][j])/pow(dx,2)*Re)-((u[i][j]/(2*dx))*(Phi[i+1][j]-Phi[i-1][j])))+(((Phi[i][j+1]-2*Phi[i][j]+Phi[i][j-1])/pow(dy,2)*Re)-((v[i][j]/(2*dy))*(Phi[i][j+1]-Phi[i][j-1]))))*dt+Phi[i][j];
      }
   }
   for(int j = 1; j <= (ny-2)/2; j++){    
       Phi_new[0][j] = 1;
     }
+  for(int j = 1; j <= (ny-3); j++){    
+      Phi_new[nx-2][j] = Phi_new[nx-3][j];
+    }
+  
   
 }
 
@@ -274,8 +278,8 @@ void paraview(string fileName, double **var, int nx, int ny, double dx, double d
 
 int main(){
 
-  int nx = 60;
-  int ny = 20;
+  int nx = 300;
+  int ny = 30;
   double Re = 300.;
   double dx = 2;
   double dy = 1;
@@ -345,7 +349,7 @@ int main(){
   //visualize(v,nx,ny);
   
   initialize(u,u_new,v,v_new,F,G,P,P_old,P_new,Phi,Phi_new,nx,ny);
-for (int n = 1; n<=100; n++){  
+for (int n = 1; n<=1000; n++){  
   simulation_FG(u, u_new, v, v_new, F, G, nx, ny, Re, dx, dy, dt);
   simulation_p(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
   simulation_uv(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
@@ -357,20 +361,20 @@ for (int n = 1; n<=100; n++){
   
   cout << "n = " << n << "\n";
  
-  //if( n% == 0) {
+  if( n%5 == 0) {
   fileName = "phi_" + to_string(n) + ".vtk";
   paraview(fileName, Phi, nx-1, ny-1, dx, dy);
   fileName = "u_" + to_string(n) + ".vtk";
   paraview(fileName, u, nx-1, ny, dx, dy);
 
-  visualize(F,nx-1,ny);
-  visualize(u_new,nx-1,ny);
-  visualize(G,nx,ny-1);
-  visualize(v,nx,ny-1);
-  visualize(P_new,nx,ny);
-  visualize(Phi_new,nx-1,ny-1);
+  // visualize(F,nx-1,ny);
+  // visualize(u_new,nx-1,ny);
+  // visualize(G,nx,ny-1);
+  // visualize(v,nx,ny-1);
+  // visualize(P_new,nx,ny);
+  //visualize(Phi_new,nx-1,ny-1);
   }
-//}
+}
   
   
   
