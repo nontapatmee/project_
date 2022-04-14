@@ -152,30 +152,25 @@ void simulation_p(double **u, double **u_new, double **v, double **v_new, double
 	P[i][j]=P_new[i][j];
       }
     }
-    
-  for(int j=1; j<=ny-1; j++){
-    P_new[0][j] = 0;
-  }
-  for(int i=1; i<=nx-1; i++){
-    P_new[i][0] = 0;
-    P_new[i][ny-1]=0;
-  }
-  for(int j=1; j<=ny-1; j++){
-    P[0][j] = 0;
-  }
-  for(int i=1; i<=nx-1; i++){
-    P[i][0] = 0;
-    P[i][ny-1]=0;
-  }
-
 
 	
     for(int i=1; i<=nx-2; i++){
       for(int j =1; j<=ny-2; j++){
-	P_new[i][j]=((((F[i][j]-F[i-1][j])/dx+(G[i][j]-G[i][j-1])/dy)*(-1/dt))+(aa*P[i+1][j]+aa*P_new[i-1][j]+bb*P[i][j+1]+bb*P_new[i][j-1]))*cc;
-	//P_new[i][j]=(w*(((((F[i][j]-F[i-1][j])/dx+(G[i][j]-G[i][j-1])/dy)*(-1/dt))+(aa*P[i+1][j]+aa*P_new[i-1][j]+bb*P[i][j+1]+bb*P_new[i][j-1]))*cc))+((1-w)*(P[i][j]));
-	//visualize(P_new,nx,ny);
-	//follow from book neclect term having b.d.                                                                                                                                                       
+	//P_new[i][j]=((((F[i][j]-F[i-1][j])/dx+(G[i][j]-G[i][j-1])/dy)*(-1/dt))+(aa*P[i+1][j]+aa*P_new[i-1][j]+bb*P[i][j+1]+bb*P_new[i][j-1]))*cc;
+
+	if(i==1){ew=0;}
+        else{ew=1;}
+        if(i==nx-2){ee=0;}
+        else{ee=1;}
+        if(j==1){es=0;}
+        else{es=1;}
+        if(j==ny-2){en=1;}
+        else{en=1;}
+
+        cc = (pow(dx,2.)*pow(dy,2.))/((en+es)*pow(dx,2.)+(ee+ew)*pow(dy,2.));
+        //cout<<"   "<<cc<<"\n";
+        P_new[i][j]=(  ( (((F[i][j]-F[i-1][j])/dx) + ((G[i][j]-G[i][j-1])/dy))*(-1/dt) )  +  ( aa*ee*P[i+1][j] + aa*ew*P_new[i-1][j] + bb*en*P[i][j+1] + bb*es*P_new[i][j-1] )  )*cc;
+	
 	status = false;
       }
     }
@@ -194,16 +189,17 @@ void simulation_p(double **u, double **u_new, double **v, double **v_new, double
 
   
   
-  for(int j=1; j<=ny-2; j++){
-    P_new[0][j] = P_new[1][j];
-    P_new[nx-1][j] = P_new[nx-2][j];
-  }
-  for(int i=1; i<=nx-2; i++){
-    P_new[i][0] = P_new[i][1];
-    P_new[i][ny-1]=P_new[i][ny-2];
+    for(int j=1; j<=ny-2; j++){
+      P_new[0][j] = P_new[1][j];
+      P_new[nx-1][j] = P_new[nx-2][j];
+    }
+    for(int i=1; i<=nx-2; i++){
+      P_new[i][0] = P_new[i][1];
+      P_new[i][ny-1]=P_new[i][ny-2];
+    }
+
   }
   
-  }
 }
 
 
@@ -308,10 +304,10 @@ void paraview(string fileName, double **var, int nx, int ny, double dx, double d
 
 int main(){
 
-  int nx = 40;
-  int ny = 20;
+  int nx = 10;
+  int ny = 10;
   double Re = 170.;
-  double dx = 2;
+  double dx = 1;
   double dy = 1;
   double dt = 0.005;
   string fileName;
@@ -379,7 +375,7 @@ int main(){
   //visualize(v,nx,ny);
   
   initialize(u,u_new,v,v_new,F,G,P,P_old,P_new,Phi,Phi_new,nx,ny);
-for (int n = 1; n<=4000; n++){  
+for (int n = 1; n<=3; n++){  
   simulation_FG(u, u_new, v, v_new, F, G, nx, ny, Re, dx, dy, dt);
   simulation_p(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
   simulation_uv(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
@@ -391,7 +387,7 @@ for (int n = 1; n<=4000; n++){
   
   cout << "n = " << n << "\n";
  
-  if( n%10 == 0) {
+  if( n%1 == 0) {
   fileName = "phi_" + to_string(n) + ".vtk";
   paraview(fileName, Phi, nx-1, ny-1, dx, dy);
   fileName = "u_" + to_string(n) + ".vtk";
@@ -403,7 +399,7 @@ for (int n = 1; n<=4000; n++){
   //visualize(u_new,nx-1,ny);
   // visualize(G,nx,ny-1);
   // visualize(v,nx,ny-1);
-  //visualize(P_new,nx,ny);
+  visualize(P_new,nx,ny);
   //visualize(Phi_new,nx-1,ny-1);
   }
 }

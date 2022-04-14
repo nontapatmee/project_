@@ -174,7 +174,7 @@ void simulation_p(double **u, double **u_new, double **v, double **v_new, double
       for(int j =1; j<=ny-2; j++){
 	P_new[i][j]=((((F[i][j]-F[i-1][j])/dx+(G[i][j]-G[i][j-1])/dy)*(-1/dt))+(aa*P[i+1][j]+aa*P_new[i-1][j]+bb*P[i][j+1]+bb*P_new[i][j-1]))*cc;
 	//P_new[i][j]=(w*(((((F[i][j]-F[i-1][j])/dx+(G[i][j]-G[i][j-1])/dy)*(-1/dt))+(aa*P[i+1][j]+aa*P_new[i-1][j]+bb*P[i][j+1]+bb*P_new[i][j-1]))*cc))+((1-w)*(P[i][j]));
-	visualize(P_new,nx,ny);
+	//visualize(P_new,nx,ny);
 	//follow from book neclect term having b.d.                                                                                                                                                       
 	status = false;
       }
@@ -189,7 +189,7 @@ void simulation_p(double **u, double **u_new, double **v, double **v_new, double
       }
     }
 
-  }
+  
   
   for(int j=1; j<=ny-2; j++){
     P_new[0][j] = P_new[1][j];
@@ -199,6 +199,7 @@ void simulation_p(double **u, double **u_new, double **v, double **v_new, double
     P_new[i][ny-1]=P_new[i][ny-2];
   }
   
+  }
 }
 
 
@@ -303,8 +304,8 @@ void paraview(string fileName, double **var, int nx, int ny, double dx, double d
 
 int main(){
 
-  int nx = 50;
-  int ny = 30;
+  int nx = 40;
+  int ny = 20;
   double Re = 170.;
   double dx = 2;
   double dy = 1;
@@ -374,7 +375,7 @@ int main(){
   //visualize(v,nx,ny);
   
   initialize(u,u_new,v,v_new,F,G,P,P_old,P_new,Phi,Phi_new,nx,ny);
-for (int n = 1; n<=1; n++){  
+for (int n = 1; n<=4000; n++){  
   simulation_FG(u, u_new, v, v_new, F, G, nx, ny, Re, dx, dy, dt);
   simulation_p(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
   simulation_uv(u, u_new, v, v_new, F, G, P, P_new, nx, ny, Re, dx, dy, dt);
@@ -386,17 +387,18 @@ for (int n = 1; n<=1; n++){
   
   cout << "n = " << n << "\n";
  
-  if( n%50 == 0) {
+  if( n%10 == 0) {
   fileName = "phi_" + to_string(n) + ".vtk";
   paraview(fileName, Phi, nx-1, ny-1, dx, dy);
   fileName = "u_" + to_string(n) + ".vtk";
   paraview(fileName, u, nx-1, ny, dx, dy);
-
+  fileName = "p_" + to_string(n) + ".vtk";
+  paraview(fileName, P, nx, ny, dx, dy);
   // visualize(F,nx-1,ny);
   // visualize(u_new,nx-1,ny);
   // visualize(G,nx,ny-1);
   // visualize(v,nx,ny-1);
-  //  visualize(P_new,nx,ny);
+  //visualize(P_new,nx,ny);
   //visualize(Phi_new,nx-1,ny-1);
   }
 }
