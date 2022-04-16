@@ -343,7 +343,7 @@ int main(){
   int nx = 40;
   int ny = 20;
   double Re = 200.;
-  double dx = 1./real(nx-2);
+  double dx = 2./real(nx-2);
   double dy = 1./real(ny-2);
   double dt = 0.001;
   string fileName;
