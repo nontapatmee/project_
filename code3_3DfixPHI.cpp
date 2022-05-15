@@ -215,13 +215,13 @@ void initialize(double ***u, double ***u_new, double ***v, double ***v_new, doub
   // }
 
   //set phi
-  double radius = (ny)/20.;
-  double i_c = (ny)/2;
-  double j_c = (ny)/2;
+  double radius = (ny-1)/20.;
+  double i_c = (ny-1)/2;
+  double j_c = (ny-1)/2;
   for(int i = 0; i <= ny-1; i++){
     for(int j = 0; j <= ny-1; j++){
      //for(int k = 0; k<=ny-1;k++){
-      if( sqrt( pow(i+1-i_c,2) + pow(j+1-j_c,2)  ) < sqrt(2)*radius ){
+      if( sqrt( pow(i+1-i_c,2) + pow(j+1-j_c,2)  ) < radius ){
 	// Phi[i][j][nz-2] = 1.;
 	// w[i][j][nz-2] = 2.;
 	// H[i][j][nz-2] = 2.;
@@ -776,12 +776,12 @@ void simulation_passiveScalar(double ***u, double ***u_new, double ***v, double 
 	Phi_new[i][j][0]=(-1)*Phi_new[i][j][1];
     }
   }
-  double radius = (ny)/20.;
-  double i_c = (ny)/2;
-  double j_c = (ny)/2;
+  double radius = (ny-1)/20.;
+  double i_c = (ny-1)/2;
+  double j_c = (ny-1)/2;
   for(int i = 0; i <= ny-1; i++){
     for(int j = 0; j <= ny-1; j++){
-      if( sqrt( pow(i+1-i_c,2) + pow(j+1-j_c,2)  ) < sqrt(2)*radius ){
+      if( sqrt( pow(i+1-i_c,2) + pow(j+1-j_c,2)  ) < radius ){
 	Phi[i+1][j+1][0] = 1.;
       }
     }
@@ -832,9 +832,9 @@ void paraview(string fileName, double ***var, int nx, int ny, int nz, double dx,
 
 int main(){
 
-  int nx = 60;
-  int ny = 60;
-  int nz = 60;
+  int nx = 160;
+  int ny = 80;
+  int nz = 120;
   double Re = 1000.;
   double dx = 20./real(nx-2);
   double dy = 10./real(ny-2);
@@ -965,11 +965,10 @@ int main(){
   //visualize(Phi,nx-1,ny-1,nz-1,'Q');
   //visualize(w,nx,ny-1,nz-1,'w');
   
-  for(int n=1;n<=3000;n++){
-
+  for(int n=1;n<=10000;n++){
     simulation_FG(u, u_new, v, v_new, w, w_new, F, G, H, nx, ny, nz, Re, dx, dy, dz, dt);
-    simulation_p(u, u_new, v, v_new, w, w_new, F, G, H, P, P_new, nx, ny, nz, Re, dx, dy, dz, dt);
-    //POISSON(P_new, F, G, H, 1.7, nx, ny, nz, dx, dy, dz, dt, n);
+    //simulation_p(u, u_new, v, v_new, w, w_new, F, G, H, P, P_new, nx, ny, nz, Re, dx, dy, dz, dt);
+    POISSON(P_new, F, G, H, 1.7, nx, ny, nz, dx, dy, dz, dt, n);
     update(P,P_new,nx,ny,nz);
     simulation_uv(u, u_new, v, v_new, w, w_new, F, G, H, P, P_new, nx, ny, nz, Re, dx, dy, dz, dt);
     update(u,u_new,nx-1,ny,nz);
@@ -989,13 +988,18 @@ int main(){
     //visualize(H,nx,ny,nz-1,'H');
     //visualize(P,nx,ny,nz,'P');
     //visualize(P_new,nx,ny,nz,'j');
-    
-    fileName = "u_3D" + to_string(n) + ".vtk";
-    paraview(fileName,u,nx-1,ny,nz,dx,dy,dz);
-    fileName = "Phi_3D" + to_string(n) + ".vtk";
-    paraview(fileName,Phi,nx-1,ny-1,nz-1,dx,dy,dz);
-    fileName = "w_3D" + to_string(n) + ".vtk";
-    paraview(fileName,w,nx,ny,nz-1,dx,dy,dz);
+    if(n%10==0){ 
+      fileName = "u_3D" + to_string(n) + ".vtk";
+      paraview(fileName,u,nx-1,ny,nz,dx,dy,dz);
+      fileName = "Phi_3D" + to_string(n) + ".vtk";
+      paraview(fileName,Phi,nx-1,ny-1,nz-1,dx,dy,dz);
+      fileName = "w_3D" + to_string(n) + ".vtk";
+      paraview(fileName,w,nx,ny,nz-1,dx,dy,dz);
+      fileName = "v_3D" + to_string(n) + ".vtk";
+      paraview(fileName,v,nx,ny-1,nz,dx,dy,dz);
+      fileName = "P_3D" + to_string(n) + ".vtk";
+      paraview(fileName,P,nx,ny,nz,dx,dy,dz);
+    }
   }
   //visualize(u,nx-1,ny,nz,'u');
 }
