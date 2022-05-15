@@ -221,16 +221,16 @@ void initialize(double ***u, double ***u_new, double ***v, double ***v_new, doub
   for(int i = 0; i <= ny-1; i++){
     for(int j = 0; j <= ny-1; j++){
      //for(int k = 0; k<=ny-1;k++){
-      if( sqrt( pow(i+1-i_c,2) + pow(j+1-j_c,2)  ) < radius ){
+      if( sqrt( pow(i+1-i_c,2) + pow(j+1-j_c,2)  ) < sqrt(2)*radius ){
 	// Phi[i][j][nz-2] = 1.;
 	// w[i][j][nz-2] = 2.;
 	// H[i][j][nz-2] = 2.;
 	// w_new[i][j][nz-2] = 2.;
 
-	Phi[i][j][0] = 1.;
-	w[i][j][0] = 1.;
-	H[i][j][0] = 1.;
-	w_new[i][j][0] = 1.;
+	Phi[i+1][j+1][0] = 1.;
+	w[i+1][j+1][0] = 1.;
+	H[i+1][j+1][0] = 1.;
+	w_new[i+1][j+1][0] = 1.;
 
 	////////////
 	//u[0][j][k] = 1.;
@@ -811,9 +811,9 @@ void paraview(string fileName, double ***var, int nx, int ny, int nz, double dx,
 
 int main(){
 
-  int nx = 6;
-  int ny = 6;
-  int nz = 6;
+  int nx = 60;
+  int ny = 80;
+  int nz = 80;
   double Re = 300.;
   double dx = 20./real(nx-2);
   double dy = 10./real(ny-2);
@@ -965,7 +965,7 @@ int main(){
     // visualize(Phi,nx-1,ny-1,nz-1,'Q');
     //visualize(F,nx-1,ny,nz,'F');
     //visualize(G,nx,ny-1,nz,'G');
-    visualize(H,nx,ny,nz-1,'H');
+    //visualize(H,nx,ny,nz-1,'H');
     //visualize(P,nx,ny,nz,'P');
     //visualize(P_new,nx,ny,nz,'j');
     
